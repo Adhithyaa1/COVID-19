@@ -9,5 +9,5 @@ import dash_table
 import pandas as pd
 
 
-df = pd.read_csv(r'C:/Users/adhi3/OneDrive/Desktop//covidmaster2.csv')
+df =  pd.read_csv(r'covidmaster2.csv')
 df=df[df['location']!='World']
