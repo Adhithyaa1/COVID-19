@@ -8,11 +8,11 @@ import dash_bootstrap_components as dbc
 import os as os
 
 from webapp import app
-import tab1 
-import tab2 
-import tab3
-import sidepanel 
-import transforms
+import ctab1 
+import ctab2 
+import ctab3
+import csidepanel 
+import ctransforms
 
 import sqlite3
 import Dash
@@ -20,17 +20,17 @@ from dash.dependencies import Input, Output
 import dash_table
 import pandas as pd
 
-app.layout = sidepanel.layout
+app.layout = csidepanel.layout
 
 @app.callback(Output('tabs-content', 'children'),
               [Input('tabs', 'value')])
 def render_content(tab):
     if tab == 'tab-1':
-        return tab1.layout
+        return ctab1.layout
     elif tab == 'tab-2':
-       return tab2.layout
+       return ctab2.layout
     elif tab == 'tab-3':
-        return tab3.layout
+        return ctab3.layout
 
 
 operators = [['ge ', '>='],
@@ -84,7 +84,7 @@ def split_filter_part(filter_part):
      ])
 def update_table(page_current, page_size, sort_by, filter1, ratingcheck, prices ,month, day, location):
     filtering_expressions = filter1.split(' && ')
-    dff = transforms.df
+    dff = ctransforms.df
     
     low = prices[0]
     high = prices[1]
@@ -98,10 +98,10 @@ def update_table(page_current, page_size, sort_by, filter1, ratingcheck, prices 
     dff1=[]
     
     if 'All' in location :
-        dff=transforms.df
+        dff=ctransforms.df
     else:
         for i in location:
-            dff = transforms.df
+            dff = ctransforms.df
             if location=={'label': 'All', 'value': 'All'}:
     
                 dff=dff
