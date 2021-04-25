@@ -154,4 +154,4 @@ def update_table(page_current, page_size, sort_by, filter1, ratingcheck, prices 
     
     
 if __name__ == '__main__':
-    app.run_server(debug = False, port=8001)
+    app.run_server(debug = True)
