@@ -6,4 +6,3 @@ dash_html_components==1.0.3
 plotly==4.8.2
 dash==1.13.3
 gunicorn==19.0.0
-Flask==0.7.2
