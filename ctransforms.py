@@ -9,5 +9,8 @@ import dash_table
 import pandas as pd
 
 
-df =  pd.read_csv(r'covidmaster2.csv')
+from pathlib import Path
+
+_DATA_PATH = Path(__file__).resolve().parent / "covidmaster2.csv"
+df = pd.read_csv(_DATA_PATH)
 df=df[df['location']!='World']
