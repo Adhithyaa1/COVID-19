@@ -1,121 +1,70 @@
-import dash
-import dash_core_components as dcc
-import dash_html_components as html
-import dash_bootstrap_components as dbc 
-import pandas as pd
-import plotly.graph_objs as go
-from dash.dependencies import Input, Output
-import dash_table
-from webapp import app
-import ctransforms
+"""Tab 3 — country rankings with correct aggregations."""
 
-df = ctransforms.df
+from dash import dcc, html
+import dash_bootstrap_components as dbc
 
 layout = html.Div(
-            id='table-paging-with-graph-container2',
-            className="five columns"
-        )
-
-@app.callback(Output('table-paging-with-graph-container2', "children"),
-[Input('rating-95', 'value')
-, Input('price-slider', 'value')
-, Input('month-slider', 'value')
-, Input('day-slider', 'value')
-, Input('location', 'value')  
-])
-
-def update_graph(ratingcheck, prices ,month, day, location):
-    dff = df
-     
-    low = prices[0]
-    high = prices[1]
-
-    jan=month[0]
-    dec=month[1]
-    
-    mind=day[0]
-    maxd=day[1]
-    
-        
-    dff1=[]
-    if 'All' in location:
-        dff=ctransforms.df
-    else:
-        for i in location:
-            dff = ctransforms.df
-            if location=={'label': 'All', 'value': 'All'}:
-    
-                dff=dff
-        
-            else:
-                dff1.append(dff.loc[(dff['location']==i)])
-        dff = pd.concat(dff1)
-        
-    dff = dff.loc[(dff['year'] >= low) & (dff['year'] <= high)]
-    
-    dff = dff.loc[(dff['month'] >= jan) & (dff['month'] <= dec)]
-
-    dff = dff.loc[(dff['day'] >= mind) & (dff['day'] <= maxd)]
-        
-    trace1 = go.Bar(
-       x = dff.groupby(["location"]).total_cases.sum().reset_index()['location'],
-       y = dff.groupby(["location"]).total_cases.sum().reset_index()['total_cases'],
-       name = 'total_cases'
-    )
-    trace2 = go.Bar(
-       x = dff.groupby(["location"]).total_cases.sum().reset_index()['location'],
-       y = dff.groupby(["location"]).total_deaths.sum().reset_index()['total_deaths'],
-       name = 'total_deaths',
-       marker_color='crimson'
-    )
-    return html.Div([html.H5('Active Cases Country Wise',style={'text-align':'center'}),
-        dcc.Graph(
-            id='rating-price'
-            , figure={
-                'data': [trace1
-                    # dict(
-                    #     x=df['price'],
-                    #     y=df['rating'],
-                    #     #text=df[df['continent'] == i]['country'],
-                    #     mode='markers',
-                    #     opacity=0.7,
-                    #     marker={
-                    #         'size': 8,
-                    #         'line': {'width': 0.5, 'color': 'white'}
-                    #     },
-                    #     name='Price v Rating'
-                    #) 
-                ],
-                'layout': dict(
-                    xaxis={'title': 'country','categoryorder':'total descending'},
-                    yaxis={'title': 'total cases'}
-                )
-            }
+    [
+        html.P(
+            "Cross-country comparison using the last observation in the selected date range "
+            "(not a sum of cumulative totals). Case fatality uses total_deaths / total_cases.",
+            className="text-muted",
         ),
-         html.Br(),
-         html.Br(),
-         html.H5('Death Toll Country Wise',style={'text-align':'center'}),
-         dcc.Graph(
-            id='rating-price1'
-            , figure={
-                'data': [trace2
-                    # dict(
-                    #     x=df['price'],
-                    #     y=df['rating'],
-                    #     #text=df[df['continent'] == i]['country'],
-                    #     mode='markers',
-                    #     opacity=0.7,
-                    #     marker={
-                    #         'size': 8,
-                    #         'line': {'width': 0.5, 'color': 'white'}
-                    #     },
-                    #     name='Price v Rating'
-                    #) 
-                ],
-                'layout': dict(
-                    xaxis={'title': 'country','categoryorder':'total descending'},
-                    yaxis={'title': 'total deaths'}
-                )
-            }
-        )
-    ])
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        html.Label("Rank by"),
+                        dcc.Dropdown(
+                            id="rank-metric",
+                            options=[
+                                {"label": "Total cases (latest)", "value": "total_cases"},
+                                {"label": "Total deaths (latest)", "value": "total_deaths"},
+                                {
+                                    "label": "Cases per million (latest)",
+                                    "value": "total_cases_per_million",
+                                },
+                                {
+                                    "label": "Deaths per million (latest)",
+                                    "value": "total_deaths_per_million",
+                                },
+                                {"label": "Case fatality ratio (CFR)", "value": "cfr"},
+                                {
+                                    "label": "Peak smoothed daily cases (in range)",
+                                    "value": "peak_new_cases",
+                                },
+                                {
+                                    "label": "New cases in period",
+                                    "value": "period_new_cases",
+                                },
+                                {
+                                    "label": "New deaths in period",
+                                    "value": "period_new_deaths",
+                                },
+                            ],
+                            value="total_deaths_per_million",
+                            clearable=False,
+                        ),
+                    ],
+                    width=6,
+                ),
+                dbc.Col(
+                    [
+                        html.Label("Show top N"),
+                        dcc.Slider(
+                            id="rank-top-n",
+                            min=5,
+                            max=40,
+                            step=5,
+                            value=20,
+                            marks={5: "5", 10: "10", 20: "20", 30: "30", 40: "40"},
+                        ),
+                    ],
+                    width=6,
+                ),
+            ],
+            className="mb-3",
+        ),
+        dcc.Graph(id="rank-graph", style={"height": "620px"}),
+    ]
+)

@@ -1,139 +1,102 @@
-import dash
-import plotly
-import dash_core_components as dcc
-import dash_html_components as html 
-import dash_bootstrap_components as dbc 
-import dash_table
-import pandas
-from dash.dependencies import Input, Output
+"""App shell: sidebar filters + tabbed analytics workspace."""
 
-import webapp
-import ctab1
-import ctab2
-import ctab3
+from dash import dcc, html
+import dash_bootstrap_components as dbc
+
 import ctransforms
 
-def BuildOptions(df, AddAll):  
-    OptionList = [{'label': i, 'value': i} for i in df.unique()]
-    if AddAll == 1:       
-        OptionList.insert(0,{'label': 'All', 'value': 'All'})          
-    return OptionList
+location_options = [{"label": "All countries", "value": "All"}] + [
+    {"label": loc, "value": loc} for loc in ctransforms.LOCATIONS
+]
+continent_options = [{"label": "All continents", "value": "All"}] + [
+    {"label": c, "value": c} for c in ctransforms.CONTINENTS
+]
 
-df = ctransforms.df
-min_p=df.year.min()
-max_p=df.year.max()
 
-min_m=df.month.min()
-max_m=df.month.max()
+def _kpi_card(title: str, kpi_id: str) -> html.Div:
+    return html.Div(
+        [
+            html.Div(title, className="text-muted small"),
+            html.H4(id=kpi_id, className="mb-0 mt-1"),
+        ],
+        className="border rounded p-2 mb-2 bg-light",
+    )
 
-min_d=df.day.min()
-max_d=df.day.max()
 
-qty=df.total_cases.sum()
-dea=df.total_deaths.sum()
-
-options_array1 = BuildOptions(df.location,1)
-
-layout = html.Div([
-    html.H1('COVID-19',style={'text-align':'center'})
-    ,dbc.Row([dbc.Col(
-        html.Div([
-         html.H2('Filters')
-        , html.Div(id='rating-95'
-        )
-        ,html.Div([html.H5('Year Slider')
-            ,dcc.RangeSlider(id='price-slider'
-                            ,min = min_p
-                            ,max= max_p
-                            , marks = { 2020:'2020',
-                                       2021:'2021',
-                                       }
-                            , value = [2020,2021]
-                            )
-                        
-                            ]),
-            html.Div([html.H5('Month Slider')
-            ,dcc.RangeSlider(id='month-slider'
-                            ,min = min_m
-                            ,max= max_m
-                            , marks = { 1:'1',
-                                        2:'2',
-                                        3:'3',
-                                        4: '4',
-                                        5: '5',
-                                        6: '6',
-                                        7: '7',
-                                        8: '8',
-                                        9: '9',
-                                        10: '10',
-                                       11:'11',
-                                       12:'12',
-                                       }
-                            , value = [1,12]
-                            )
-                             
-                              ]),
-            html.Div([html.H5('Day Slider')
-            ,dcc.RangeSlider(id='day-slider'
-                            ,min = min_d
-                            ,max= max_d
-                            , marks = { 1:'1',
-                                        3:'3',
-                                        5: '5',
-                                        7: '7',
-                                        9: '9',
-                                       11:'11',
-                                       13:'13',
-                                       15:'15',
-                                       17:'17',
-                                       19:'19',
-                                       21:'21',
-                                       23:'23',
-                                       25:'25',
-                                       27:'27',
-                                       29:'29',
-                                       31:'31',
-                                       }
-                            , value = [1,31]
-                            )        
-                        
-                            ])
-        ,html.Div([html.H5('Country')
-            ,dcc.Dropdown(id='location'
-                            ,options=options_array1,
-                            value='All',
-                                multi=True
-                            )],
-                        className='two columns'
-                            )
-            ,html.Br()
-            ,html.Div(html.H5("TOTAL CASES(Million)"))
-
-            ,html.Div(
-                                    id="qty",
-                                    className="mini_container",
-                                    style={"visibility": "visible"},
-                                )
-            ,html.Br()
-            ,html.Div(html.H5("TOTAL DEATHS(Million)"))
-
-            ,html.Div(
-                                    id="dea",
-                                    className="mini_container",
-                                    style={"visibility": "visible"},
-                                ),
-                  
-        ], style={'marginBottom': 50, 'marginTop': 25, 'marginLeft':15, 'marginRight':15})
-    , width=3)
-
-    ,dbc.Col(html.Div([
-            dcc.Tabs(id="tabs", value='tab-1', style={'width':'100%'}, children=[
-                    dcc.Tab(label='Data Table', value='tab-1'),
-                    dcc.Tab(label='Cases Plot', value='tab-2'),
-                    dcc.Tab(label='Deaths Plot', value='tab-3'),
-                ])
-            , html.Div(id='tabs-content')
-        ]), width=9)])
-    
-    ])
-
+layout = dbc.Container(
+    [
+        html.H2("COVID-19 Analytics Lab", className="text-center my-3"),
+        html.P(
+            "Exploratory analysis of early-pandemic outcomes (Jan 2020 – Jan 2021). "
+            "Filters apply across all tabs.",
+            className="text-center text-muted mb-4",
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        html.H5("Filters"),
+                        html.Label("Date range", className="fw-semibold mt-2"),
+                        dcc.DatePickerRange(
+                            id="date-range",
+                            min_date_allowed=ctransforms.DATE_MIN,
+                            max_date_allowed=ctransforms.DATE_MAX,
+                            start_date=ctransforms.DATE_MIN,
+                            end_date=ctransforms.DATE_MAX,
+                            display_format="YYYY-MM-DD",
+                            className="mb-2",
+                        ),
+                        html.Label("Continent", className="fw-semibold mt-3"),
+                        dcc.Dropdown(
+                            id="continent",
+                            options=continent_options,
+                            value="All",
+                            clearable=False,
+                            className="mb-2",
+                        ),
+                        html.Label("Country", className="fw-semibold mt-2"),
+                        dcc.Dropdown(
+                            id="location",
+                            options=location_options,
+                            value=["All"],
+                            multi=True,
+                            className="mb-3",
+                        ),
+                        html.Hr(),
+                        html.H6("Period KPIs"),
+                        html.P(
+                            "New cases/deaths = sum of daily new_*. "
+                            "Latest totals = last cumulative observation per country in range.",
+                            className="small text-muted",
+                        ),
+                        _kpi_card("Countries in view", "kpi-countries"),
+                        _kpi_card("New cases (period)", "kpi-new-cases"),
+                        _kpi_card("New deaths (period)", "kpi-new-deaths"),
+                        _kpi_card("Latest cumulative cases", "kpi-latest-cases"),
+                        _kpi_card("Latest cumulative deaths", "kpi-latest-deaths"),
+                    ],
+                    width=3,
+                    className="pe-3",
+                ),
+                dbc.Col(
+                    [
+                        dcc.Tabs(
+                            id="tabs",
+                            value="tab-1",
+                            children=[
+                                dcc.Tab(label="Data Explorer", value="tab-1"),
+                                dcc.Tab(label="Epidemic Curves", value="tab-2"),
+                                dcc.Tab(label="Country Rankings", value="tab-3"),
+                                dcc.Tab(label="Policy & Transmission", value="tab-4"),
+                                dcc.Tab(label="Socioeconomic Lens", value="tab-5"),
+                            ],
+                        ),
+                        html.Div(id="tabs-content", className="mt-3"),
+                    ],
+                    width=9,
+                ),
+            ]
+        ),
+    ],
+    fluid=True,
+)
